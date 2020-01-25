@@ -1,0 +1,25 @@
+logging:
+  level:
+    root: INFO
+    mx.com.gnp.service: INFO 
+    org: 
+      hibernate: 
+        SQL: ERROR
+        
+spring:
+  datasource:
+    driver-class-name: org.hsqldb.jdbc.JDBCDriver
+    url: jdbc:hsqldb:mem:.;
+    username: SA
+    password:
+    hikari:
+      maximum-pool-size: 1
+
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate.dialect: org.hibernate.dialect.DB2Dialect
+      hibernate.default_schema: PUBLIC   
+      

@@ -1,0 +1,162 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+import groovy.util.ConfigObject;
+
+buildscript {
+	repositories {
+		maven {
+			name "GNP repository"
+			url "http://nexus.gnp.mx/repository/maven-releases"
+		}
+		maven {
+			name "Maven Central"
+			url "http://nexus.gnp.mx/repository/maven-central/"
+		}
+		jcenter()
+	}
+	
+
+	dependencies {
+		// Plugin para autoversionar.
+		classpath "mx.com.gnp.plugin:gradle-release:2.8.2"
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.2.RELEASE")
+	}
+}
+
+plugins {
+	id 'java'
+	id 'jacoco'
+	id 'com.github.kt3k.coveralls' version '2.6.3'
+	id 'checkstyle'
+	id 'org.sonarqube' version '2.7'
+}
+
+group = 'mx.com.gnp.plus.consultasinies'
+
+// Aplicación de plugin para autoversionar, medir cobertura y publicar artefactos.
+apply plugin: 'net.researchgate.release'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply from: "${rootDir}/jacoco.gradle"
+apply from: "${rootDir}/artifactPublication.gradle"
+
+
+
+jar {
+    manifest {
+	attributes 'Implementation-Title': project.name,
+		   'Implementation-Version': project.version,
+		   'Implementation-Vendor-Id': project.group,
+		   'Implementation-Vendor': 'GNP',
+		   'Implementation-URL': 'http://git.gnp.mx/tools/javamicroservice-template'
+    }
+}
+
+ext {
+	minCoverageRates = [
+		'instruction': 90,
+		'branch'     : 90,
+		'line'       : 90,
+		'complexity' : 90,
+		'method'     : 100,
+		'class'      : 100
+	]
+	coverageExclusions = [
+            'mx/com/gnp/plus/consultasinies/Application.class',
+            'mx/com/gnp/plus/consultasinies/model/**'
+ 	]
+}
+
+checkstyle {
+
+	checkstyleMain.exclude 'mx/com/gnp/plus/consultasinies/config/**' 
+	checkstyleMain.exclude 'mx/com/gnp/plus/consultasinies/**' 
+	   
+	sourceSets = [project.sourceSets.main]
+	    
+}
+
+sonarqube {
+	properties {
+		property "sonar.buildbreaker.skip" , "false"
+	}
+}
+
+description = 'Plantilla de microservicios para Openshift y Gradle'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+repositories {
+	maven {
+        name "Maven Central"
+        url "http://nexus.gnp.mx/repository/maven-central/"
+    }
+	maven {
+        name "GNP repository"
+        url "http://nexus.gnp.mx/repository/maven-releases"
+    }
+    maven {
+        name "GNP Third party"
+        url "http://nexus.gnp.mx/repository/third_party_libraries/"
+    }
+}
+
+configurations.all {
+    exclude module : 'logback-classic'
+    exclude module: 'spring-boot-starter-logging'    
+}
+
+
+dependencies {
+   compile fileTree(dir: 'libs', include: '*.jar')
+
+	//Test
+	testCompile('org.jmockit:jmockit:1.45')
+	testCompile('org.junit:junit5-engine:5.0.0-ALPHA')
+	testImplementation('org.springframework.boot:spring-boot-starter-test')	
+	testImplementation('org.hsqldb:hsqldb')
+	
+	//Swagger2
+	implementation('io.springfox:springfox-swagger2:2.9.2')
+	implementation('io.springfox:springfox-swagger-ui:2.9.2')
+
+	//Lombok
+	annotationProcessor('org.projectlombok:lombok')
+    compileOnly('org.projectlombok:lombok')
+	
+	//Spring
+	implementation('org.springframework.boot:spring-boot-starter-web') 
+	implementation('org.springframework.boot:spring-boot-starter-actuator')
+	
+	//Log
+	implementation('org.springframework.boot:spring-boot-starter-log4j2')
+	
+	//DB
+//	implementation('org.springframework.boot:spring-boot-starter-data-jpa')
+//	implementation('com.ibm.db2:db2jcc4:10.1') 
+//	implementation('com.zaxxer:HikariCP')
+  
+}
+
+
+test {
+    jvmArgs "-javaagent:${classpath.find { it.name.contains("jmockit") }.absolutePath}"
+	systemProperty "file.encoding", "utf-8"
+}
+
+tasks.withType(Checkstyle).each { checkstyleTask ->
+    checkstyleTask.doLast {
+        reports.all { report ->
+            def outputFile = report.destination
+            if (outputFile.exists() && outputFile.text.contains("<error ")) {
+                throw new GradleException("There were checkstyle warnings! For more info check $outputFile")
+            }
+        }
+    }
+}
+
+
+javadoc {
+	failOnError = false
+}
+

@@ -1,0 +1,33 @@
+buildProject:
+  script:
+    - ./gradlew clean build jacocoTestReport sonarqube
+  stage: build
+  tags:
+    - 'java8'
+    - 'gradle'
+
+autoversion:
+  script:
+    - sh autoversion.sh
+  only:
+    - master
+  stage: build
+  tags:
+    - 'java8'
+    - 'gradle'
+    - 'sshpush'
+
+DeployArtifacts:
+  script:
+    - ./gradlew publish
+  after_script:
+    - bash automic_deploy_oc.sh
+  stage: deploy
+  tags:
+    - 'java8'
+    - 'gradle'
+    - 'artifactDeployer'
+  only:
+    - tags
+    - master
+  when: manual

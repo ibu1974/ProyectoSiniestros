@@ -1,0 +1,3 @@
+//Nombre del proyecto que será utilizado para generar el nombre del artefacto. Separar las palabras con guiones medios
+rootProject.name = "MsConsultaSiniestros"
+
