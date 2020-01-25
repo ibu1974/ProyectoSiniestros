@@ -25,7 +25,7 @@ import springfox.documentation.spring.web.plugins.Docket;
 
 
 /**
- * @author ibu
+ * @author ibu-modificado desde el repositorio
  *
  */
 @Slf4j
